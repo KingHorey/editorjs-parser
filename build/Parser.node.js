@@ -43,6 +43,16 @@ const embedMarkups = {
     defaultMarkup: `<div class="embed"><iframe src="<%data.embed%>" <%data.length%> class="embed-unknown" allowfullscreen="true" frameborder="0" ></iframe></div>`,
 };
 
+const processNestedLists = function testNest(style , data) {
+    let result = data.reduce((acc, res) => {
+        if (res.items.length > 0)
+            return acc + `<li>${res.content}</li>` + testNest(style, res.items)
+        else
+            return acc + `<li>${res.content}</li>`
+    }, "");
+    return `<${style}>${result}</${style}>`
+};
+
 var defaultParsers = {
     paragraph: function(data, config) {
         return `<p class="${config.paragraph.pClass}"> ${data.text} </p>`;
@@ -53,14 +63,15 @@ var defaultParsers = {
     },
 
     list: function(data) {
-        const type = data.style === "ordered" ? "ol" : "ul";
-        const items = data.items.reduce(
-            (acc, item) => acc + `<li>${item}</li>`,
-            ""
-        );
-        return `<${type}>${items}</${type}>`;
+        const style = data.style === "ordered" ? "ol" : "ul";
+        let items = data.items.reduce((acc, res) => {
+          if (res.items.length > 0) {
+            return acc + `<li>${res.content}</li>` + processNestedLists(style, res.items);
+          }else
+            return acc + `<li>${res.content}</li>`
+        }, "");
+        return `<${style}>${items}</${style}>`
     },
-
     quote: function(data, config) {
         let alignment = "";
         if (config.quote.applyAlignment) {
@@ -175,6 +186,7 @@ class edjsParser {
     parse(EditorJsObject) {
         const html = EditorJsObject.blocks.map((block) => {
             const markup = this.parseBlock(block);
+            console.log(markup);
             if (markup instanceof Error) {
                 return ""; // parser for this kind of block doesn't exist
             }

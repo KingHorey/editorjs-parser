@@ -1,4 +1,5 @@
 import { sanitizeHtml } from "./utitlities";
+import { processNestedLists } from "./utitlities";
 
 export default {
     paragraph: function(data, config) {
@@ -10,14 +11,15 @@ export default {
     },
 
     list: function(data) {
-        const type = data.style === "ordered" ? "ol" : "ul";
-        const items = data.items.reduce(
-            (acc, item) => acc + `<li>${item}</li>`,
-            ""
-        );
-        return `<${type}>${items}</${type}>`;
+        const style = data.style === "ordered" ? "ol" : "ul";
+        let items = data.items.reduce((acc, res) => {
+          if (res.items.length > 0) {
+            return acc + `<li>${res.content}</li>` + processNestedLists(style, res.items);
+          }else
+            return acc + `<li>${res.content}</li>`
+        }, "")
+        return `<${style}>${items}</${style}>`
     },
-
     quote: function(data, config) {
         let alignment = "";
         if (config.quote.applyAlignment) {

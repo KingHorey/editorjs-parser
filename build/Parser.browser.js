@@ -45,6 +45,14 @@ var edjsParser = function () {
     codepen: "<div class=\"embed\"><iframe <%data.length%> scrolling=\"no\" src=\"<%data.embed%>\" frameborder=\"no\" loading=\"lazy\" allowtransparency=\"true\" allowfullscreen=\"true\"></iframe></div>",
     defaultMarkup: "<div class=\"embed\"><iframe src=\"<%data.embed%>\" <%data.length%> class=\"embed-unknown\" allowfullscreen=\"true\" frameborder=\"0\" ></iframe></div>"
   };
+
+  var processNestedLists = function testNest(style, data) {
+    var result = data.reduce(function (acc, res) {
+      if (res.items.length > 0) return acc + "<li>".concat(res.content, "</li>") + testNest(style, res.items);else return acc + "<li>".concat(res.content, "</li>");
+    }, "");
+    return "<".concat(style, ">").concat(result, "</").concat(style, ">");
+  };
+
   var defaultParsers = {
     paragraph: function paragraph(data, config) {
       return "<p class=\"".concat(config.paragraph.pClass, "\"> ").concat(data.text, " </p>");
@@ -53,11 +61,13 @@ var edjsParser = function () {
       return "<h".concat(data.level, ">").concat(data.text, "</h").concat(data.level, ">");
     },
     list: function list(data) {
-      var type = data.style === "ordered" ? "ol" : "ul";
-      var items = data.items.reduce(function (acc, item) {
-        return acc + "<li>".concat(item, "</li>");
+      var style = data.style === "ordered" ? "ol" : "ul";
+      var items = data.items.reduce(function (acc, res) {
+        if (res.items.length > 0) {
+          return acc + "<li>".concat(res.content, "</li>") + processNestedLists(style, res.items);
+        } else return acc + "<li>".concat(res.content, "</li>");
       }, "");
-      return "<".concat(type, ">").concat(items, "</").concat(type, ">");
+      return "<".concat(style, ">").concat(items, "</").concat(style, ">");
     },
     quote: function quote(data, config) {
       var alignment = "";
@@ -178,6 +188,8 @@ var edjsParser = function () {
 
         var html = EditorJsObject.blocks.map(function (block) {
           var markup = _this.parseBlock(block);
+
+          console.log(markup);
 
           if (markup instanceof Error) {
             return ""; // parser for this kind of block doesn't exist

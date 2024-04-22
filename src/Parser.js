@@ -12,6 +12,7 @@ export default class edjsParser {
     parse(EditorJsObject) {
         const html = EditorJsObject.blocks.map((block) => {
             const markup = this.parseBlock(block);
+            console.log(markup)
             if (markup instanceof Error) {
                 return ""; // parser for this kind of block doesn't exist
             }
@@ -33,3 +34,4 @@ export default class edjsParser {
         }
     }
 }
+

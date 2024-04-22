@@ -40,3 +40,13 @@ export const embedMarkups = {
 
     defaultMarkup: `<div class="embed"><iframe src="<%data.embed%>" <%data.length%> class="embed-unknown" allowfullscreen="true" frameborder="0" ></iframe></div>`,
 };
+
+export const processNestedLists = function testNest(style , data) {
+    let result = data.reduce((acc, res) => {
+        if (res.items.length > 0)
+            return acc + `<li>${res.content}</li>` + testNest(style, res.items)
+        else
+            return acc + `<li>${res.content}</li>`
+    }, "")
+    return `<${style}>${result}</${style}>`
+}
